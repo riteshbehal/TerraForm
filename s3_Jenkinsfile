@@ -2,36 +2,40 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'BUCKET_NAME', defaultValue: 'my-custom-bucket-from-jenkins', description: 'S3 bucket name')
+        string(name: 'BUCKET_NAME', defaultValue: 'my-custom-bucket-from-jenkins', description: 'Name of the S3 bucket')
     }
 
     environment {
         TF_VAR_bucket_name = "${params.BUCKET_NAME}"
+        TF_VAR_aws_region = "us-east-1"
     }
 
     stages {
-        stage('Clone Terraform Repo') {
+        stage('Terraform Init') {
             steps {
-                echo "Cloning Terraform Repo..."
-                checkout scm
+                sh 'terraform init'
             }
         }
 
-        stage('Terraform Apply (S3)') {
+        stage('Terraform Plan') {
             steps {
-                dir('s3') {
-                    sh '''
-                        terraform init
-                        terraform plan
-                        terraform apply --auto-approve
-                    '''
-                }
+                sh 'terraform plan'
             }
         }
 
-        stage('Confirm Creation') {
+        stage('Terraform Apply') {
             steps {
-                echo "S3 bucket '${params.BUCKET_NAME}' created successfully"
+                sh 'terraform apply --auto-approve'
+            }
+        }
+
+        stage('Terraform Destroy') {
+            when {
+                expression { return params.BUCKET_NAME != '' } // optional condition
+            }
+            steps {
+                input message: "Do you want to destroy the bucket '${params.BUCKET_NAME}'?"
+                sh 'terraform destroy --auto-approve'
             }
         }
     }
