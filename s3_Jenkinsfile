@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'BUCKET_NAME', defaultValue: 'my-custom-bucket-from-jenkins', description: 'Name of the S3 bucket')
+        string(name: 'BUCKET_NAME', defaultValue: 'my-custom-jenkins-bucket', description: 'Enter S3 Bucket Name')
     }
 
     environment {
@@ -31,10 +31,10 @@ pipeline {
 
         stage('Terraform Destroy') {
             when {
-                expression { return params.BUCKET_NAME != '' } // optional condition
+                expression { return params.BUCKET_NAME != '' }
             }
             steps {
-                input message: "Do you want to destroy the bucket '${params.BUCKET_NAME}'?"
+                input message: "Do you want to destroy bucket: ${params.BUCKET_NAME}?"
                 sh 'terraform destroy --auto-approve'
             }
         }
