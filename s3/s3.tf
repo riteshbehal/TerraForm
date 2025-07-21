@@ -12,5 +12,7 @@ resource "aws_s3_bucket" "my_bucket" {
     Environment = "Dev"
   }
 
-  force_destroy = true  # Important: allows deletion even if bucket is not empty
+  # optional
+  force_destroy = false
+  region        = "us-east-1"
 }
