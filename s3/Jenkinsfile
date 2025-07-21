@@ -2,9 +2,14 @@ pipeline {
     agent any
 
     parameters {
-    string(name: 'AWS_REGION', defaultValue: 'us-east-1', description: 'AWS region to deploy resources')
-    string(name: 'BUCKET_NAME', defaultValue: 'my-terra-bucket', description: 'Name of the S3 bucket')
-}
+        string(name: 'AWS_REGION', defaultValue: 'us-east-2', description: 'AWS region to deploy resources')
+        string(name: 'BUCKET_NAME', defaultValue: 'my-terra-bucket', description: 'Name of the S3 bucket')
+    }
+
+    environment {
+        TF_VAR_bucket_name = "${params.BUCKET_NAME}"
+        TF_VAR_region = "${params.AWS_REGION}"
+    }
 
     stages {
         stage('Checkout Repo') {
@@ -24,11 +29,7 @@ pipeline {
         stage('Terraform Plan') {
             steps {
                 dir('s3') {
-                    sh """
-                        terraform plan \
-                        -var="bucket_name=${params.BUCKET_NAME}" \
-                        -var="region=${params.AWS_REGION}"
-                    """
+                    sh 'terraform plan'
                 }
             }
         }
@@ -36,11 +37,7 @@ pipeline {
         stage('Terraform Apply') {
             steps {
                 dir('s3') {
-                    sh """
-                        terraform apply -auto-approve \
-                        -var="bucket_name=${params.BUCKET_NAME}" \
-                        -var="region=${params.AWS_REGION}"
-                    """
+                    sh 'terraform apply -auto-approve'
                 }
             }
         }
