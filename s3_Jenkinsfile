@@ -1,24 +1,16 @@
 pipeline {
     agent any
 
-    parameters {
-        string(name: 'BUCKET_NAME', defaultValue: 'my-jenkins-bucket', description: 'Enter the S3 bucket name')
-    }
-
     environment {
-        TF_VAR_bucket_name = "${params.BUCKET_NAME}"
-        TF_VAR_aws_region = "us-east-1"
+        AWS_DEFAULT_REGION = 'us-east-1' //Updated to match your actual region
     }
 
     stages {
         stage('Clone Terraform Repo') {
             steps {
-                echo "Cloning Terraform repo..."
-                checkout([$class: 'GitSCM',
-                          branches: [[name: '*/main']],
-                          extensions: [],
-                          userRemoteConfigs: [[url: 'https://github.com/riteshbehal/TerraForm.git']]
-                ])
+                echo 'Cloning Terraform repo...'
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']],
+                          userRemoteConfigs: [[url: 'https://github.com/riteshbehal/TerraForm.git']]])
             }
         }
 
@@ -42,10 +34,8 @@ pipeline {
             steps {
                 dir('s3') {
                     script {
-                        if (params.BUCKET_NAME) {
-                            echo "Applying Terraform to create bucket: ${params.BUCKET_NAME}"
-                            sh 'terraform apply --auto-approve'
-                        }
+                        echo "Applying Terraform to create bucket: my-terra-bucket"
+                        sh 'terraform apply --auto-approve'
                     }
                 }
             }
