@@ -13,19 +13,25 @@ pipeline {
     stages {
         stage('Terraform Init') {
             steps {
-                sh 'terraform init'
+                dir('terraform/s3') {
+                    sh 'terraform init'
+                }
             }
         }
 
         stage('Terraform Plan') {
             steps {
-                sh 'terraform plan'
+                dir('terraform/s3') {
+                    sh 'terraform plan'
+                }
             }
         }
 
         stage('Terraform Apply') {
             steps {
-                sh 'terraform apply --auto-approve'
+                dir('terraform/s3') {
+                    sh 'terraform apply --auto-approve'
+                }
             }
         }
 
@@ -34,8 +40,10 @@ pipeline {
                 expression { return params.BUCKET_NAME != '' }
             }
             steps {
-                input message: "Do you want to destroy bucket: ${params.BUCKET_NAME}?"
-                sh 'terraform destroy --auto-approve'
+                dir('terraform/s3') {
+                    input message: "Do you want to destroy bucket: ${params.BUCKET_NAME}?"
+                    sh 'terraform destroy --auto-approve'
+                }
             }
         }
     }
