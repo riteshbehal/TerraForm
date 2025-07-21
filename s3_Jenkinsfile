@@ -2,44 +2,48 @@ pipeline {
     agent any
 
     environment {
-        TF_VAR_region = 'us-east-1'
+        TF_WORKING_DIR = 's3'
+        AWS_DEFAULT_REGION = 'us-east-1'
     }
 
     stages {
-        stage('Clone Terraform Repo') {
+        stage('Checkout Code') {
             steps {
-                echo 'Cloning repo for S3 setup'
-                checkout([$class: 'GitSCM', branches: [[name: '*/main']], 
-                    extensions: [], 
-                    userRemoteConfigs: [[credentialsId: 'github', url: 'https://github.com/riteshbehal/TerraForm.git']]
-                ])
+                git url: 'https://github.com/riteshbehal/TerraForm.git', branch: 'main'
             }
         }
 
-        stage('Terraform Apply (S3)') {
+        stage('Terraform Init') {
             steps {
-                sh '''
-                    cd s3
-                    terraform init
-                    terraform plan -target=aws_s3_bucket.my_bucket
-                    terraform apply --auto-approve -target=aws_s3_bucket.my_bucket
-                '''
+                dir("${env.TF_WORKING_DIR}") {
+                    sh 'terraform init'
+                }
             }
         }
 
-        stage('Destroy S3 Bucket?') {
+        stage('Terraform Plan') {
             steps {
-                input message: 'Destroy S3 bucket?'
+                dir("${env.TF_WORKING_DIR}") {
+                    sh 'terraform plan'
+                }
             }
         }
 
-        stage('Terraform Destroy (S3)') {
+        stage('Terraform Apply') {
             steps {
-                sh '''
-                    cd s3
-                    terraform destroy --auto-approve -target=aws_s3_bucket.my_bucket
-                '''
+                dir("${env.TF_WORKING_DIR}") {
+                    sh 'terraform apply --auto-approve'
+                }
             }
+        }
+    }
+
+    post {
+        failure {
+            echo 'Terraform apply failed!'
+        }
+        success {
+            echo 'S3 Bucket deployed successfully!'
         }
     }
 }
