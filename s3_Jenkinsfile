@@ -29,7 +29,7 @@ pipeline {
 
         stage('Destroy S3 Bucket?') {
             steps {
-                input message: 'Destroy the S3 bucket?'
+                input message: 'Do you want to destroy the S3 bucket?'
             }
         }
 
