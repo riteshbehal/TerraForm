@@ -4,7 +4,7 @@ variable "bucket_name" {
 }
 
 variable "region" {
-  description = "AWS Region"
+  description = "AWS Region to create the bucket in"
   type        = string
   default     = "us-east-1"
 }
