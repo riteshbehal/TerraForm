@@ -1,44 +1,44 @@
 pipeline {
     agent any
-
-    environment {
-        TF_VAR_region = 'us-east-1'
+    parameters {
+        string(name: 'BUCKET_NAME', defaultValue: 'my-default-bucket', description: 'Enter the S3 bucket name')
     }
 
     stages {
         stage('Clone Terraform Repo') {
             steps {
-                echo 'Cloning repo for S3 setup'
-                checkout([$class: 'GitSCM', branches: [[name: '*/main']], 
-                    extensions: [], 
-                    userRemoteConfigs: [[credentialsId: 'github', url: 'https://github.com/riteshbehal/TerraForm.git']]
+                echo 'Cloning S3 Terraform module'
+                checkout([$class: 'GitSCM',
+                          branches: [[name: '*/main']],
+                          extensions: [],
+                          userRemoteConfigs: [[url: 'https://github.com/riteshbehal/TerraForm.git']]
                 ])
             }
         }
 
         stage('Terraform Apply (S3)') {
             steps {
-                sh '''
-                    cd s3
+                sh """
+                    cd terraform/s3
                     terraform init
-                    terraform plan -target=aws_s3_bucket.my_bucket
-                    terraform apply --auto-approve -target=aws_s3_bucket.my_bucket
-                '''
+                    terraform plan -var="bucket_name=${BUCKET_NAME}"
+                    terraform apply -var="bucket_name=${BUCKET_NAME}" --auto-approve
+                """
             }
         }
 
         stage('Destroy S3 Bucket?') {
             steps {
-                input message: 'Destroy S3 bucket?'
+                input message: 'Destroy the S3 bucket?'
             }
         }
 
         stage('Terraform Destroy (S3)') {
             steps {
-                sh '''
-                    cd s3
-                    terraform destroy --auto-approve -target=aws_s3_bucket.my_bucket
-                '''
+                sh """
+                    cd terraform/s3
+                    terraform destroy -var="bucket_name=${BUCKET_NAME}" --auto-approve
+                """
             }
         }
     }
