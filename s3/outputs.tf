@@ -1,3 +1,4 @@
 output "bucket_name" {
-  value = aws_s3_bucket.bucket.id
+  description = "Name of the created S3 bucket"
+  value       = aws_s3_bucket.bucket.bucket
 }
