@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Clone Terraform Repo') {
+            steps {
+                echo 'Cloning repo for EC2 setup'
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        credentialsId: 'github',
+                        url: 'https://github.com/riteshbehal/devopscourse.git'
+                    ]]
+                ])
+            }
+        }
+        stage('Terraform Apply (EC2)') {
+            steps {
+                sh '''
+                    cd terraform/ec2
+                    terraform init
+                    terraform plan -target=aws_instance.example
+                    terraform apply --auto-approve -target=aws_instance.example
+                '''
+            }
+        }
+        stage('Destroy EC2 Instance?') {
+            steps {
+                input message: 'Destroy EC2 instance?'
+            }
+        }
+        stage('Terraform Destroy (EC2)') {
+            steps {
+                sh '''
+                    cd terraform/ec2
+                    terraform destroy --auto-approve -target=aws_instance.example
+                '''
+            }
+        }
+    }
+}
