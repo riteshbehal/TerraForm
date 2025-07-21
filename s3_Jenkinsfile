@@ -1,16 +1,18 @@
 pipeline {
     agent any
-
     environment {
-        AWS_DEFAULT_REGION = 'us-east-1' //Updated to match your actual region
+        TF_IN_AUTOMATION = "true"
+        AWS_REGION = "us-east-1"
     }
-
+    parameters {
+        string(name: 'BUCKET_NAME', defaultValue: 'my-terra-bucket-2025', description: 'Name of the S3 bucket')
+        choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Terraform action to perform')
+    }
     stages {
         stage('Clone Terraform Repo') {
             steps {
                 echo 'Cloning Terraform repo...'
-                checkout([$class: 'GitSCM', branches: [[name: '*/main']],
-                          userRemoteConfigs: [[url: 'https://github.com/riteshbehal/TerraForm.git']]])
+                checkout scm
             }
         }
 
@@ -25,7 +27,7 @@ pipeline {
         stage('Terraform Plan') {
             steps {
                 dir('s3') {
-                    sh 'terraform plan'
+                    sh "terraform plan -var='bucket_name=${params.BUCKET_NAME}' -input=false"
                 }
             }
         }
@@ -34,8 +36,13 @@ pipeline {
             steps {
                 dir('s3') {
                     script {
-                        echo "Applying Terraform to create bucket: my-terra-bucket"
-                        sh 'terraform apply --auto-approve'
+                        if (params.ACTION == 'apply') {
+                            sh "terraform apply -var='bucket_name=${params.BUCKET_NAME}' -auto-approve"
+                        } else if (params.ACTION == 'destroy') {
+                            sh "terraform destroy -var='bucket_name=${params.BUCKET_NAME}' -auto-approve"
+                        } else {
+                            error "Invalid ACTION parameter: ${params.ACTION}"
+                        }
                     }
                 }
             }
