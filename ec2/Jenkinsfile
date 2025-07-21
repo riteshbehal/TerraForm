@@ -8,19 +8,25 @@ pipeline {
   stages {
     stage('Terraform Init') {
       steps {
-        sh 'terraform init'
+        dir('ec2') {
+          sh 'terraform init'
+        }
       }
     }
 
     stage('Terraform Plan') {
       steps {
-        sh "terraform plan -var=\"instance_name=${params.INSTANCE_NAME}\""
+        dir('ec2') {
+          sh "terraform plan -var=\"instance_name=${params.INSTANCE_NAME}\""
+        }
       }
     }
 
     stage('Terraform Apply') {
       steps {
-        sh "terraform apply -auto-approve -var=\"instance_name=${params.INSTANCE_NAME}\""
+        dir('ec2') {
+          sh "terraform apply -auto-approve -var=\"instance_name=${params.INSTANCE_NAME}\""
+        }
       }
     }
   }
