@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Clone Terraform Repo') {
+            steps {
+                echo 'Cloning repo for S3 setup'
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        credentialsId: 'github',
+                        url: 'https://github.com/riteshbehal/devopscourse.git'
+                    ]]
+                ])
+            }
+        }
+        stage('Terraform Apply (S3)') {
+            steps {
+                sh '''
+                    cd terraform/s3
+                    terraform init
+                    terraform plan -target=aws_s3_bucket.my_bucket
+                    terraform apply --auto-approve -target=aws_s3_bucket.my_bucket
+                '''
+            }
+        }
+        stage('Destroy S3 Bucket?') {
+            steps {
+                input message: 'Destroy S3 bucket?'
+            }
+        }
+        stage('Terraform Destroy (S3)') {
+            steps {
+                sh '''
+                    cd terraform/s3
+                    terraform destroy --auto-approve -target=aws_s3_bucket.my_bucket
+                '''
+            }
+        }
+    }
+}
