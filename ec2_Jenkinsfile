@@ -7,28 +7,31 @@ pipeline {
     }
 
     environment {
-        AWS_ACCESS_KEY_ID     = credentials('aws-access-key-id')
-        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
-        AWS_DEFAULT_REGION    = 'us-east-1'
+        AWS_ACCESS_KEY_ID     = credentials('aws-access-key-id')       // from Jenkins credentials
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')   // from Jenkins credentials
+        AWS_DEFAULT_REGION    = 'ap-south-1'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/riteshbehal/TerraForm.git'
+                git branch: 'main', url: 'https://github.com/CodeSagarOfficial/jenkins-scripts.git'
             }
         }
-        stage('Terraform init') {
+
+        stage('Terraform Init') {
             steps {
                 sh 'terraform init'
             }
         }
+
         stage('Plan') {
             steps {
                 sh 'terraform plan -out tfplan'
                 sh 'terraform show -no-color tfplan > tfplan.txt'
             }
         }
+
         stage('Apply / Destroy') {
             steps {
                 script {
@@ -39,9 +42,9 @@ pipeline {
                             parameters: [text(name: 'Plan', description: 'Please review the plan', defaultValue: plan)]
                         }
 
-                        sh 'terraform ${action} -input=false tfplan'
+                        sh "terraform ${params.action} -input=false tfplan"
                     } else if (params.action == 'destroy') {
-                        sh 'terraform ${action} --auto-approve'
+                        sh "terraform ${params.action} --auto-approve"
                     } else {
                         error "Invalid action selected. Please choose either 'apply' or 'destroy'."
                     }
@@ -49,5 +52,13 @@ pipeline {
             }
         }
 
+        stage('Outputs') {
+            when {
+                expression { params.action == 'apply' }
+            }
+            steps {
+                sh 'terraform output'
+            }
+        }
     }
 }
