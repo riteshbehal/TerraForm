@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        TF_VAR_bucket_name = "my-unique-s3-bucket-name-123456"  // or inject as parameter
+        TF_VAR_bucket_name = "my-terra-bucket"  // or inject as parameter
         AWS_REGION = "us-east-1"
     }
 
