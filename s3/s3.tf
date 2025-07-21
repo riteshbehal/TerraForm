@@ -1,9 +1,9 @@
 resource "aws_s3_bucket" "my_bucket" {
-  bucket = "my-jenkins-s3-bucket-123456789"  # Must be globally unique
+  bucket = "ritesh-jenkins-demo-bucket-001"
   acl    = "private"
 
   tags = {
-    Name        = "MyJenkinsS3Bucket"
+    Name        = "Jenkins S3 Bucket"
     Environment = "Dev"
   }
 }
