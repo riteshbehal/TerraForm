@@ -1,48 +1,28 @@
 pipeline {
     agent any
+
     environment {
-        TF_IN_AUTOMATION = "true"
-        AWS_REGION = "us-east-1"
+        AWS_DEFAULT_REGION = "us-east-1"
+        BUCKET_NAME = "my-terra-bucket-${BUILD_NUMBER}" // Unique bucket name
     }
-    parameters {
-        string(name: 'BUCKET_NAME', defaultValue: 'my-terra-bucket-2025', description: 'Name of the S3 bucket')
-        choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Terraform action to perform')
-    }
+
     stages {
-        stage('Clone Terraform Repo') {
+        stage('Clone Repository') {
             steps {
-                echo 'Cloning Terraform repo...'
-                checkout scm
+                git branch: 'main', url: 'https://github.com/riteshbehal/TerraForm.git'
             }
         }
 
-        stage('Terraform Init') {
+        stage('Terraform Init and Apply') {
             steps {
-                dir('s3') {
-                    sh 'terraform init'
-                }
-            }
-        }
-
-        stage('Terraform Plan') {
-            steps {
-                dir('s3') {
-                    sh "terraform plan -var='bucket_name=${params.BUCKET_NAME}' -input=false"
-                }
-            }
-        }
-
-        stage('Terraform Apply or Destroy') {
-            steps {
-                dir('s3') {
-                    script {
-                        if (params.ACTION == 'apply') {
-                            sh "terraform apply -var='bucket_name=${params.BUCKET_NAME}' -auto-approve"
-                        } else if (params.ACTION == 'destroy') {
-                            sh "terraform destroy -var='bucket_name=${params.BUCKET_NAME}' -auto-approve"
-                        } else {
-                            error "Invalid ACTION parameter: ${params.ACTION}"
-                        }
+                dir('TerraForm/s3') {
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+                        sh '''
+                            terraform init
+                            terraform apply -auto-approve \
+                              -var="bucket_name=${BUCKET_NAME}" \
+                              -var="region=${AWS_DEFAULT_REGION}"
+                        '''
                     }
                 }
             }
