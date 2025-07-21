@@ -1,0 +1,27 @@
+pipeline {
+  agent any
+
+  parameters {
+    string(name: 'BUCKET_NAME', defaultValue: 'my-s3-bucket', description: 'S3 Bucket Name')
+  }
+
+  stages {
+    stage('Terraform Init') {
+      steps {
+        sh 'terraform init'
+      }
+    }
+
+    stage('Terraform Plan') {
+      steps {
+        sh "terraform plan -var=\"bucket_name=${params.BUCKET_NAME}\""
+      }
+    }
+
+    stage('Terraform Apply') {
+      steps {
+        sh "terraform apply -auto-approve -var=\"bucket_name=${params.BUCKET_NAME}\""
+      }
+    }
+  }
+}
