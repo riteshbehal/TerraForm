@@ -2,8 +2,7 @@ pipeline {
     agent any
 
     parameters {
-        choice(name: 'ACTION', choices: ['create', 'destroy'], description: 'Select whether to create or destroy the S3 bucket')
-        string(name: 'BUCKET_NAME', defaultValue: 'my-custom-bucket-from-jenkins', description: 'Name of the S3 bucket')
+        string(name: 'BUCKET_NAME', defaultValue: 'my-custom-bucket-from-jenkins', description: 'S3 bucket name')
     }
 
     environment {
@@ -13,49 +12,26 @@ pipeline {
     stages {
         stage('Clone Terraform Repo') {
             steps {
-                echo "📥 Cloning Terraform Repo..."
+                echo "Cloning Terraform Repo..."
                 checkout scm
             }
         }
 
-        stage('Terraform Init') {
+        stage('Terraform Apply (S3)') {
             steps {
                 dir('s3') {
-                    sh 'terraform init'
+                    sh '''
+                        terraform init
+                        terraform plan
+                        terraform apply --auto-approve
+                    '''
                 }
             }
         }
 
-        stage('Terraform Plan & Apply/Destroy') {
+        stage('Confirm Creation') {
             steps {
-                dir('s3') {
-                    script {
-                        if (params.ACTION == 'create') {
-                            echo "Creating bucket: ${params.BUCKET_NAME}"
-                            sh '''
-                                terraform plan
-                                terraform apply --auto-approve
-                            '''
-                        } else {
-                            echo "Destroying bucket: ${params.BUCKET_NAME}"
-                            sh '''
-                                terraform destroy --auto-approve
-                            '''
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Confirmation') {
-            steps {
-                script {
-                    if (params.ACTION == 'create') {
-                        echo "S3 bucket '${params.BUCKET_NAME}' created successfully."
-                    } else {
-                        echo "S3 bucket '${params.BUCKET_NAME}' destroyed successfully."
-                    }
-                }
+                echo "S3 bucket '${params.BUCKET_NAME}' created successfully"
             }
         }
     }
