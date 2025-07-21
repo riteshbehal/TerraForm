@@ -19,10 +19,10 @@ pipeline {
         stage('Terraform Apply (S3)') {
             steps {
                 sh """
-                    cd terraform/s3
+                    cd s3
                     terraform init
-                    terraform plan -var="bucket_name=${BUCKET_NAME}"
-                    terraform apply -var="bucket_name=${BUCKET_NAME}" --auto-approve
+                    terraform plan -var="bucket_name=${params.BUCKET_NAME}"
+                    terraform apply -var="bucket_name=${params.BUCKET_NAME}" --auto-approve
                 """
             }
         }
@@ -36,8 +36,8 @@ pipeline {
         stage('Terraform Destroy (S3)') {
             steps {
                 sh """
-                    cd terraform/s3
-                    terraform destroy -var="bucket_name=${BUCKET_NAME}" --auto-approve
+                    cd s3
+                    terraform destroy -var="bucket_name=${params.BUCKET_NAME}" --auto-approve
                 """
             }
         }
