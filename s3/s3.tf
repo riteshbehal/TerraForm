@@ -1,7 +1,9 @@
 resource "aws_s3_bucket" "my_bucket" {
-  bucket = var.bucket_name
+  bucket = "my-terra-bucket"
+  acl    = "private"
 
   tags = {
-    CreatedBy = "Terraform via Jenkins"
+    Name        = "Jenkins S3 Bucket"
+    Environment = "Dev"
   }
 }
