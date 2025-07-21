@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'BUCKET_NAME', defaultValue: 'my-custom-jenkins-bucket', description: 'Enter S3 Bucket Name')
+        string(name: 'BUCKET_NAME', defaultValue: 'my-jenkins-bucket', description: 'Enter the S3 bucket name')
     }
 
     environment {
@@ -11,9 +11,20 @@ pipeline {
     }
 
     stages {
+        stage('Clone Terraform Repo') {
+            steps {
+                echo "Cloning Terraform repo..."
+                checkout([$class: 'GitSCM',
+                          branches: [[name: '*/main']],
+                          extensions: [],
+                          userRemoteConfigs: [[url: 'https://github.com/riteshbehal/TerraForm.git']]
+                ])
+            }
+        }
+
         stage('Terraform Init') {
             steps {
-                dir('terraform/s3') {
+                dir('s3') {
                     sh 'terraform init'
                 }
             }
@@ -21,28 +32,21 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                dir('terraform/s3') {
+                dir('s3') {
                     sh 'terraform plan'
                 }
             }
         }
 
-        stage('Terraform Apply') {
+        stage('Terraform Apply or Destroy') {
             steps {
-                dir('terraform/s3') {
-                    sh 'terraform apply --auto-approve'
-                }
-            }
-        }
-
-        stage('Terraform Destroy') {
-            when {
-                expression { return params.BUCKET_NAME != '' }
-            }
-            steps {
-                dir('terraform/s3') {
-                    input message: "Do you want to destroy bucket: ${params.BUCKET_NAME}?"
-                    sh 'terraform destroy --auto-approve'
+                dir('s3') {
+                    script {
+                        if (params.BUCKET_NAME) {
+                            echo "Applying Terraform to create bucket: ${params.BUCKET_NAME}"
+                            sh 'terraform apply --auto-approve'
+                        }
+                    }
                 }
             }
         }
