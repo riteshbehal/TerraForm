@@ -1,9 +1,9 @@
 resource "aws_s3_bucket" "my_bucket" {
-  bucket        = "my-terra-bucket"
+  bucket        = var.bucket_name
   force_destroy = true
 
   tags = {
-    Name        = "my-terra-bucket"
+    Name        = var.bucket_name
     Environment = "Dev"
   }
 }
