@@ -2,29 +2,43 @@ pipeline {
     agent any
 
     environment {
-        AWS_DEFAULT_REGION = "us-east-1"
-        BUCKET_NAME = "my-terra-bucket-${BUILD_NUMBER}" // Unique bucket name
+        TF_VAR_region = 'us-east-1'
     }
 
     stages {
-        stage('Clone Repository') {
+        stage('Clone Terraform Repo') {
             steps {
-                git branch: 'main', url: 'https://github.com/riteshbehal/TerraForm.git'
+                echo 'Cloning repo for S3 setup'
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']], 
+                    extensions: [], 
+                    userRemoteConfigs: [[credentialsId: 'github', url: 'https://github.com/riteshbehal/TerraForm.git']]
+                ])
             }
         }
 
-        stage('Terraform Init and Apply') {
+        stage('Terraform Apply (S3)') {
             steps {
-                dir('TerraForm/s3') {
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
-                        sh '''
-                            terraform init
-                            terraform apply -auto-approve \
-                              -var="bucket_name=${BUCKET_NAME}" \
-                              -var="region=${AWS_DEFAULT_REGION}"
-                        '''
-                    }
-                }
+                sh '''
+                    cd s3
+                    terraform init
+                    terraform plan -target=aws_s3_bucket.my_bucket
+                    terraform apply --auto-approve -target=aws_s3_bucket.my_bucket
+                '''
+            }
+        }
+
+        stage('Destroy S3 Bucket?') {
+            steps {
+                input message: 'Destroy S3 bucket?'
+            }
+        }
+
+        stage('Terraform Destroy (S3)') {
+            steps {
+                sh '''
+                    cd s3
+                    terraform destroy --auto-approve -target=aws_s3_bucket.my_bucket
+                '''
             }
         }
     }
