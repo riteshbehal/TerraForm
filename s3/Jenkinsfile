@@ -8,19 +8,25 @@ pipeline {
   stages {
     stage('Terraform Init') {
       steps {
-        sh 'terraform init'
+        dir('s3') {
+          sh 'terraform init'
+        }
       }
     }
 
     stage('Terraform Plan') {
       steps {
-        sh "terraform plan -var=\"bucket_name=${params.BUCKET_NAME}\""
+        dir('s3') {
+          sh "terraform plan -var=\"bucket_name=${params.BUCKET_NAME}\""
+        }
       }
     }
 
     stage('Terraform Apply') {
       steps {
-        sh "terraform apply -auto-approve -var=\"bucket_name=${params.BUCKET_NAME}\""
+        dir('s3') {
+          sh "terraform apply -auto-approve -var=\"bucket_name=${params.BUCKET_NAME}\""
+        }
       }
     }
   }
