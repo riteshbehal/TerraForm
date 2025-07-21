@@ -2,48 +2,34 @@ pipeline {
     agent any
 
     environment {
-        TF_WORKING_DIR = 's3'
-        AWS_DEFAULT_REGION = 'us-east-1'
+        TF_VAR_bucket_name = "my-unique-s3-bucket-name-123456"  // or inject as parameter
+        AWS_REGION = "us-east-1"
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('Initialize Terraform') {
             steps {
-                git url: 'https://github.com/riteshbehal/TerraForm.git', branch: 'main'
-            }
-        }
-
-        stage('Terraform Init') {
-            steps {
-                dir("${env.TF_WORKING_DIR}") {
+                dir('s3') {
                     sh 'terraform init'
                 }
             }
         }
 
-        stage('Terraform Plan') {
+        stage('Plan Terraform') {
             steps {
-                dir("${env.TF_WORKING_DIR}") {
+                dir('s3') {
                     sh 'terraform plan'
                 }
             }
         }
 
-        stage('Terraform Apply') {
+        stage('Apply Terraform') {
             steps {
-                dir("${env.TF_WORKING_DIR}") {
-                    sh 'terraform apply --auto-approve'
+                input "Proceed with Terraform apply?"
+                dir('s3') {
+                    sh 'terraform apply -auto-approve'
                 }
             }
-        }
-    }
-
-    post {
-        failure {
-            echo 'Terraform apply failed!'
-        }
-        success {
-            echo 'S3 Bucket deployed successfully!'
         }
     }
 }
