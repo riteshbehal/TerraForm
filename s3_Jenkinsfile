@@ -2,12 +2,12 @@ pipeline {
     agent any
 
     environment {
-        TF_VAR_bucket_name = "my-terra-bucket"  // or inject as parameter
-        AWS_REGION = "us-east-1"
+        // You can customize this prefix
+        TF_VAR_bucket_name = "aman-s3"
     }
 
     stages {
-        stage('Initialize Terraform') {
+        stage('Terraform Init') {
             steps {
                 dir('s3') {
                     sh 'terraform init'
@@ -15,19 +15,19 @@ pipeline {
             }
         }
 
-        stage('Plan Terraform') {
+        stage('Terraform Apply') {
             steps {
                 dir('s3') {
-                    sh 'terraform plan'
+                    sh 'terraform apply -auto-approve'
                 }
             }
         }
 
-        stage('Apply Terraform') {
+        stage('Show Output') {
             steps {
-                input "Proceed with Terraform apply?"
                 dir('s3') {
-                    sh 'terraform apply -auto-approve'
+                    echo '✅ Bucket created successfully. Details:'
+                    sh 'terraform output bucket_name'
                 }
             }
         }
