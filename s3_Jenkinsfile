@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         // You can customize this prefix
-        TF_VAR_bucket_name = "ritesh-s3"
+        TF_VAR_bucket_name = "ritesh-awss3-t1"
     }
 
     stages {
